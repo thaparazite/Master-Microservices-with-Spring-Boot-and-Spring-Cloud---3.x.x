@@ -1,0 +1,104 @@
+
+# services to be used in the docker-compose file
+services:
+  # service for the currency exchange service
+  currency-exchange-service:
+    # image to be used for the service
+    image: flaviuvanca/mmvfv1984-currency-exchange-service:0.0.1-SNAPSHOT
+    # memory limit for the service
+    mem_limit: 700mb
+    # ports to be used for the currency exchange service
+    ports:
+      - "8000:8000"
+    # default network for the currency exchange service  
+    networks:
+      - currency-network
+    # depends on the naming server and the currency conversion service  
+    depends_on:
+      - naming-server
+      - zipkin-server
+    # environment variables to be used for the service  
+    environment:
+      # Eureka server URL
+      EUREKA.CLIENT.SERVICEURL.DEFAULTZONE: http://naming-server:8761/eureka
+      # Zipkin server URL 
+      MANAGEMENT.ZIPKIN.TRACING.ENDPOINT: http://zipkin-server:9411/api/v2/spans
+
+
+  currency-conversion-service:
+    # image to be used for the service
+    image: flaviuvanca/mmvfv1984-currency-conversion-service:0.0.1-SNAPSHOT
+    # memory limit for the currency exchange service
+    mem_limit: 700mb
+    # ports to be used for the service
+    ports:
+      - "8100:8100"
+    # default network for the currency conversion service  
+    networks:
+      - currency-network
+    # depends on the naming server and the currency exchange service  
+    depends_on:
+      - naming-server
+      - zipkin-server
+    # environment variables to be used for the service  
+    environment:
+      # Eureka server URL
+      EUREKA.CLIENT.SERVICEURL.DEFAULTZONE: http://naming-server:8761/eureka 
+      # Zipkin server URL
+      SMANAGEMENT.ZIPKIN.TRACING.ENDPOINT: http://zipkin-server:9411/api/v2/spans
+
+
+  api-gateway:
+    # image to be used for the service
+    image: flaviuvanca/mmvfv1984-api-gateway:0.0.1-SNAPSHOT
+    # memory limit for the service
+    mem_limit: 700mb
+    # ports to be used for the service
+    ports:
+      - "8765:8765"
+    networks:
+      - currency-network
+    # depends on the naming server and the currency exchange service  
+    depends_on:
+      - naming-server
+      - zipkin-server
+    # environment variables to be used for the service  
+    environment:
+      # Eureka server URL
+      EUREKA.CLIENT.SERVICEURL.DEFAULTZONE: http://naming-server:8761/eureka
+      # Zipkin server URL
+      MANAGEMENT.ZIPKIN.TRACING.ENDPOINT: http://zipkin-server:9411/api/v2/spans
+
+  zipkin-server:
+    image: ghcr.io/openzipkin/zipkin-slim:${TAG:-latest}
+    container_name: zipkin-server
+    # default memory limit for the zipkin server
+    mem_limit: 300mb
+    # default port for the zipkin server
+    ports:
+      - "9411:9411"
+    # default network for the zipkin server  
+    networks:
+      - currency-network
+    # restart ensures that the container will always restart under the following conditions:
+    # 1 - If the container stops unexpectedly (e.g., crashes).
+    # 2 - If the Docker daemon restarts (e.g., after a system reboot).   
+    restart: always
+
+  naming-server:
+    # image to be used for the service
+    image: flaviuvanca/mmvfv1984-naming-server:0.0.1-SNAPSHOT
+    # memory limit for the naming service
+    mem_limit: 700mb
+    # ports to be used for the service
+    ports:
+      - "8761:8761"
+    # default network for the naming server  
+    networks:
+      - currency-network
+
+# network/s to be used in the docker-compose file
+networks:
+  currency-network:
+
+  

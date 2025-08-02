@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  currency-exchange:
+    image: flaviuvanca/mmvfv1984-currency-exchange-service:0.0.11-SNAPSHOT
+    container_name: exchange-service
+    ports:
+      - "8000:8000"  # Host:Container port mapping
+    environment:
+      - SPRING_APPLICATION_NAME=currency-exchange
+      - SERVER_PORT=8000
+    networks:
+      - my-currency-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  currency-conversion:
+    image: flaviuvanca/mmvfv1984-currency-conversion-service:0.0.11-SNAPSHOT
+    container_name: conversion-service
+    ports:
+      - "8100:8100"  # Host:Container port mapping
+    environment:
+      - SPRING_APPLICATION_NAME=currency-conversion
+      - SERVER_PORT=8100
+      - CURRENCY_EXCHANGE_SERVICE_HOST=currencyexchange  # Uses container name
+      - CURRENCY_EXCHANGE_SERVICE_PORT=8000
+    depends_on:
+      currency-exchange:
+        condition: service_healthy
+    networks:
+      - my-currency-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  my-currency-network:
+    driver: bridge
